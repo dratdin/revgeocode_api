@@ -6,13 +6,13 @@ from annotated_types import Len
 from pydantic import BaseModel, Field, ConfigDict
 from pydantic_extra_types.coordinate import Longitude, Latitude
 
-from .constants import ALIAS_POINT, ALIAS_LATITUDE, ALIAS_LONGITUDE
+from .constants import POINT, LATITUDE, LONGITUDE
 
 
 class Location(BaseModel):
-    name: str = Field(alias=ALIAS_POINT)
-    lat: Latitude = Field(alias=ALIAS_LATITUDE)
-    lng: Longitude = Field(alias=ALIAS_LONGITUDE)
+    name: str = Field(alias=POINT)
+    lat: Latitude = Field(alias=LATITUDE)
+    lng: Longitude = Field(alias=LONGITUDE)
 
 
 class TaskLocations(BaseModel):
@@ -20,14 +20,14 @@ class TaskLocations(BaseModel):
 
 
 class TaskStatusEnum(str, Enum):
-    running = 'running'
-    done = 'done'
-    failed = 'failed'
+    running = "running"
+    done = "done"
+    failed = "failed"
 
 
 class Task(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     task_id: UUID
     status: TaskStatusEnum
 
@@ -42,12 +42,9 @@ class Link(BaseModel):
     distance: float
 
 
-class ResultData(BaseModel):
-    points: list[Point]
-    links: list[Link]
-
-
-class GetTask(BaseModel):
+class GetTaskResults(BaseModel):
     task_id: UUID
     status: TaskStatusEnum
-    data: ResultData | None = None
+
+    points: list[Point] | None
+    links: list[Link] | None

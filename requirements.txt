@@ -4,3 +4,4 @@ geopy==2.4.1
 pydantic-extra-types==2.9.0
 SQLAlchemy==2.0.31
 aiosqlite==0.20.0
+greenlet==3.0.3

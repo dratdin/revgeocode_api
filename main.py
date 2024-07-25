@@ -19,7 +19,8 @@ app = FastAPI(lifespan=lifespan)
 
 
 app.include_router(
-    geocoding_router, prefix="/api",
+    geocoding_router,
+    prefix="/api",
 )
 
 
