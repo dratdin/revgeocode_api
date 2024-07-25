@@ -47,7 +47,7 @@ class ResultData(BaseModel):
     links: list[Link]
 
 
-class GetResult(BaseModel):
+class GetTask(BaseModel):
     task_id: UUID
     status: TaskStatusEnum
     data: ResultData | None = None
