@@ -1,15 +1,19 @@
 from io import StringIO
 import pandas as pd
 
-from fastapi import APIRouter, UploadFile, HTTPException
+from fastapi import APIRouter, UploadFile, HTTPException, BackgroundTasks
 
 from .constants import ALIAS_POINT, ALIAS_LATITUDE, ALIAS_LONGITUDE
-from .schemas import CalculateDistances
+from .models import TaskRepository
+from .schemas import TaskLocations
+from .service import reverse_geocode
+
+
 router = APIRouter(tags=["geocoding"])
 
 
-@router.post("/calculateDistances", tags=["reverse-geocoding"])
-async def calculate_distances(csv_file: UploadFile):
+@router.post("/calculateDistances", tags=["reverse-geocoding"], status_code=201)
+async def calculate_distances(csv_file: UploadFile, bg_tasks: BackgroundTasks):
     if csv_file.content_type != 'text/csv':
         raise HTTPException(status_code=400, detail="Endpoint only accepts CSV files.")
 
@@ -19,10 +23,9 @@ async def calculate_distances(csv_file: UploadFile):
         df = pd.read_csv(buff, delimiter=",")
     
     # Validate structure
-    cd_model = CalculateDistances.model_validate({
+    TaskLocations.model_validate({
         "locations": df.to_dict("records")
     })
-
     # Validate uniqueness of Point names 
     dup_points = df[ALIAS_POINT].duplicated()
     if dup_points.any():
@@ -33,9 +36,7 @@ async def calculate_distances(csv_file: UploadFile):
                 f"Duplications: {df.loc[dup_points, ALIAS_POINT].unique().tolist()}"
             )
         )
-
     df.set_index(ALIAS_POINT, inplace=True)
-    
     # Validate uniqueness coordinates (Latitude, Longitude)
     dup_coords = df.duplicated()
     if dup_coords.any():
@@ -47,15 +48,11 @@ async def calculate_distances(csv_file: UploadFile):
             )
         )
     
-    return cd_model.model_dump(by_alias=False)
+    new_task = await TaskRepository.new()
     
-    # TODO: Save to db
-    # TODO: Run background task
-    # TODO: Return task data 
-    # return {
-    #     RESPONSE_KEY__TASK_ID: "<XXXX>",
-    #     RESPONSE_KEY__STATUS: "mocked"
-    # }
+    bg_tasks.add_task(reverse_geocode, new_task, df)
+    
+    return new_task.model_dump()
 
 
 @router.get("/getResult")

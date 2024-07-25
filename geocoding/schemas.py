@@ -1,8 +1,9 @@
 from enum import Enum
+from uuid import UUID
 
 from typing import Annotated
 from annotated_types import Len
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from pydantic_extra_types.coordinate import Longitude, Latitude
 
 from .constants import ALIAS_POINT, ALIAS_LATITUDE, ALIAS_LONGITUDE
@@ -14,7 +15,7 @@ class Location(BaseModel):
     lng: Longitude = Field(alias=ALIAS_LONGITUDE)
 
 
-class CalculateDistances(BaseModel):
+class TaskLocations(BaseModel):
     locations: Annotated[list[Location], Len(min_length=1)]
 
 
@@ -25,8 +26,10 @@ class TaskStatusEnum(str, Enum):
 
 
 class Task(BaseModel):
-    task_id: str
-    status: TaskStatusEnum = TaskStatusEnum.running
+    model_config = ConfigDict(from_attributes=True)
+    
+    task_id: UUID
+    status: TaskStatusEnum
 
 
 class Point(BaseModel):
@@ -39,12 +42,12 @@ class Link(BaseModel):
     distance: float
 
 
-class TaskResultData(BaseModel):
+class ResultData(BaseModel):
     points: list[Point]
     links: list[Link]
 
 
-class TaskResult(BaseModel):
-    task_id: str
-    status: TaskStatusEnum = TaskStatusEnum.running
-    data: TaskResultData | None = None
+class GetResult(BaseModel):
+    task_id: UUID
+    status: TaskStatusEnum
+    data: ResultData | None = None
